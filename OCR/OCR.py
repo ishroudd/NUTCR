@@ -46,7 +46,7 @@ def sort_contours(cnts, method="left-to-right"):
             temp_list.append(pair)
             continue
         sorted_boxes.append(sorted(temp_list, key=lambda b: b[1][0]))
-        temp_list = [pair[1]]
+        temp_list = [pair]
     sorted_boxes.append(sorted(temp_list, key=lambda b: b[1][0]))
 
     # for box in contour_boxes[1][1:]:
@@ -56,7 +56,7 @@ def sort_contours(cnts, method="left-to-right"):
     #     sorted_boxes.append(sorted(zip(sorted_boxes, temp_list), key=lambda b: b[1][0]))
     #     temp_list = [box]
     # sorted_boxes.append(sorted(zip(sorted_boxes, temp_list), key=lambda b: b[1][0]))
-    # print(sorted_boxes)
+    print(sorted_boxes)
 
     # return the list of sorted contours and bounding boxes
     return (cnts, sorted_boxes)
