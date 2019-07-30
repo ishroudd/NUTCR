@@ -1,17 +1,103 @@
 import cv2
 import numpy as np
+import argparse
+import imutils
 
-def get_contour_precedence(contour, cols):
-    #tolerance_factor = 10
-    origin = cv2.boundingRect(contour)
-    return ((origin[1] // 1) * 1) * cols + origin[0]
+# def get_contour_precedence(contour, cols):
+#     tolerance_factor = 20
+#     origin = cv2.boundingRect(contour)
+#     print(origin)
+#     return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
 
-def
+# Writing custom sort algorithms sucks
+def sort_contours(cnts, method="left-to-right"):
+    # initialize the reverse flag and sort index
+    reverse = False
+    i = 0
+
+    # handle if we need to sort in reverse
+    if method == "right-to-left" or method == "bottom-to-top":
+        reverse = True
+
+    # handle if we are sorting against the y-coordinate rather than
+    # the x-coordinate of the bounding box
+    if method == "top-to-bottom" or method == "bottom-to-top":
+        i = 1
+
+    # construct the list of bounding boxes and sort them from top to
+    # bottom
+    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    contour_boxes = list(sorted(zip(cnts, boundingBoxes),
+                                        key=lambda b: b[1][i], reverse=reverse))
+    print(contour_boxes)
+    sorted_boxes = []
+    temp_list = [contour_boxes[0]]
+    print(temp_list)
+    for pair in contour_boxes[1:]:
+        print(pair)
+        print("yee")
+        print(temp_list)
+        print("yee")
+        print(pair[1][1])
+        print("yee")
+        print(temp_list[-1][1])
+        print("yee")
+        if pair[1][1] - temp_list[-1][1][1] in range(-20,20):
+            temp_list.append(pair)
+            continue
+        sorted_boxes.append(sorted(temp_list, key=lambda b: b[1][0]))
+        temp_list = [pair[1]]
+    sorted_boxes.append(sorted(temp_list, key=lambda b: b[1][0]))
+
+    # for box in contour_boxes[1][1:]:
+    #     if box[1] - temp_list[-1][1] in range(-20, 20):
+    #         temp_list.append(box)
+    #         continue
+    #     sorted_boxes.append(sorted(zip(sorted_boxes, temp_list), key=lambda b: b[1][0]))
+    #     temp_list = [box]
+    # sorted_boxes.append(sorted(zip(sorted_boxes, temp_list), key=lambda b: b[1][0]))
+    # print(sorted_boxes)
+
+    # return the list of sorted contours and bounding boxes
+    return (cnts, sorted_boxes)
+
+def draw_contour(image, c, i):
+    # compute the center of the contour area and draw a circle
+    # representing the center
+    if cv2.contourArea(c) < MIN_THRESH:
+        return
+    M = cv2.moments(c)
+    cX = int(M["m10"] / M["m00"])
+    cY = int(M["m01"] / M["m00"])
+
+    # draw the countour number on the image
+    cv2.putText(image, "#{}".format(i), (cX - 20, cY), cv2.FONT_HERSHEY_SIMPLEX,
+                1.0, (0, 0, 0), 2)
+
+    # return the image with the contour number drawn on it
+    return image
+
+def content_check(contour):
+    1
+
+def extract_content(contours):
+    orig = 221
+    content = []
+    for contour in contours:
+        if abs(contour[0][0][0] - orig) <= 10: #the list of contours is weird, looks like [[[x y]] [[x y]]]
+            content.append([])
+            content[-1].append(content_check(contour))
+        elif not content:
+            continue
+        content[-1].append(content_check(contour))
+
+def content_to_csv(content):
+    1
+
 
 def box_extraction(img_for_box_extraction_path, cropped_dir_path):
 
     img = cv2.imread(cropped_dir_path + img_for_box_extraction_path,0)  # Read the image
-    print(img.shape)
     (thresh, img_bin) = cv2.threshold(img, 128, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)  # Thresholding the image
     #img_bin = 255 - img_bin  # Invert the image
     #cv2.imwrite("Image_bin.jpg",img_bin)
@@ -45,20 +131,32 @@ def box_extraction(img_for_box_extraction_path, cropped_dir_path):
     cv2.waitKey(0)
     # Find contours for image, which will detect all the boxes
     contours, hierarchy = cv2.findContours(img_final_bin, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    contours.sort(key=lambda x: get_contour_precedence(x, img.shape[1]))
-    for i in range(len(contours)):
-        img_final_bin = cv2.putText(img_final_bin, str(i), cv2.boundingRect(contours[i])[:2], cv2.FONT_HERSHEY_DUPLEX, 2, [1])
+    approx = []
+    for contour in contours:
+        epsilon = 0.01 * cv2.arcLength(contour, True)
+        approx.append(cv2.approxPolyDP(contour, epsilon, True))
+    cv2.drawContours(img, approx, -1, (0, 255, 0), 3)
+    cv2.waitKey(0)
+    # approx.sort(key=lambda contour: get_contour_precedence(contour, img.shape[1]))
+    # for i in range(len(approx)):
+    #     img_final_bin = cv2.putText(img_final_bin, str(i), cv2.boundingRect(approx[i])[:2], cv2.FONT_HERSHEY_DUPLEX, 2, [1])
+    contours, bounding = sort_contours(contours, "bottom-to-top")
+    # contours, bounding = sort_contours(contours, "left-to-right")
+    for i,c in enumerate(contours,1):
+        draw_contour(img_final_bin, c, i)
 
-    #img_final_bin = cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
 
     img_final_bin = cv2.resize(img_final_bin, (x, y))
     cv2.imshow('result', img_final_bin)
     cv2.waitKey(0)
 
-
+# Resolution
 x = 1900
-y = 1050
-box_extraction(r"SKEWTEST_Page_1.png", r"F:\PycharmProjects\OCR\Workbench\\")
+y = 1000
+
+# Threshold for contour centers in draw_contour
+MIN_THRESH = 3
+box_extraction(r"scan_Page_1.png", r"F:\PycharmProjects\OCR\Workbench\\")
 
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
