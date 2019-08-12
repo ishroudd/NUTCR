@@ -3,12 +3,6 @@ import numpy as np
 import argparse
 import imutils
 
-# def get_contour_precedence(contour, cols):
-#     tolerance_factor = 20
-#     origin = cv2.boundingRect(contour)
-#     print(origin)
-#     return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
-
 # Writing custom sort algorithms sucks
 def sort_contours(cnts, method="left-to-right"):
     # initialize the reverse flag and sort index
@@ -19,13 +13,11 @@ def sort_contours(cnts, method="left-to-right"):
     if method == "right-to-left" or method == "bottom-to-top":
         reverse = True
 
-    # handle if we are sorting against the y-coordinate rather than
-    # the x-coordinate of the bounding box
+    # handle if we are sorting against the y-coordinate rather than the x-coordinate of the bounding box
     if method == "top-to-bottom" or method == "bottom-to-top":
         i = 1
 
-    # construct the list of bounding boxes and sort them from top to
-    # bottom
+    # construct the list of bounding boxes and sort them from top to bottom
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
     contour_boxes = list(sorted(zip(cnts, boundingBoxes),
                                         key=lambda b: b[1][i], reverse=reverse))
@@ -138,7 +130,10 @@ y = 1000
 
 # Threshold for contour centers in draw_contour
 MIN_THRESH = 5
-box_extraction(r"scan_Page_1.png", r"F:\PycharmProjects\NUTCR\Workbench\\") # make sure to double backslash your file path
+
+filename = "scan_Page_1.png"
+dirpath = "F:/PycharmProjects/NUTCR/Workbench/"
+box_extraction(filename, dirpath) # make sure to double backslash your file path
 
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
