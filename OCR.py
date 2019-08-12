@@ -75,7 +75,6 @@ def content_to_csv(content):
 def box_extraction(img_for_box_extraction_path, cropped_dir_path):
 
     img = cv2.imread(cropped_dir_path + img_for_box_extraction_path,0)  # Read the image
-    print(img[2:10,9:10]) #debug
     (thresh, img_bin) = cv2.threshold(img, 128, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)  # Thresholding the image
 
     # Defining a kernel length
@@ -132,8 +131,8 @@ y = 1000
 # Threshold for contour centers in draw_contour
 MIN_THRESH = 5
 
-filename = "scan_Page_1.png"
-dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\"
+filename = r"scan_Page_1.png"
+dirpath = r"C:\ScriptStuff\NUTCR\Workbench\\"
 box_extraction(filename, dirpath) # make sure to double backslash your file path
 
 
