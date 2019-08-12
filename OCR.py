@@ -33,9 +33,9 @@ def sort_contours(cnts, method="left-to-right"):
         sorted_boxes.extend(sorted(temp_list, key=lambda b: b[1][0]))
         temp_list = [pair]
     # sorted_boxes.extend(blah) <- last contour is the entire image and is not included
-    for pair in sorted_boxes:
-        print(pair[0])
-        print(cv2.countNonZero(pair[0]))
+    # for pair in sorted_boxes:
+    #     print(pair[0])
+    #     print(cv2.countNonZero(pair[0]))
     return ([pair[0] for pair in sorted_boxes], [pair[1] for pair in sorted_boxes])
 
 def rank_contour(image, c, i):
@@ -75,9 +75,8 @@ def content_to_csv(content):
 def box_extraction(img_for_box_extraction_path, cropped_dir_path):
 
     img = cv2.imread(cropped_dir_path + img_for_box_extraction_path,0)  # Read the image
+    print(img[2:10,9:10]) #debug
     (thresh, img_bin) = cv2.threshold(img, 128, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)  # Thresholding the image
-    #img_bin = 255 - img_bin  # Invert the image
-    #cv2.imwrite("Image_bin.jpg",img_bin)
 
     # Defining a kernel length
     kernel_length = np.array(img).shape[1] // 40
@@ -86,6 +85,7 @@ def box_extraction(img_for_box_extraction_path, cropped_dir_path):
     verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
     # A horizontal kernel of (kernel_length X 1), which will help to detect all the horizontal line from the image.
     hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_length, 1))
+
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))  # A kernel of (3 X 3) ones
     img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=3)
     verticle_lines_img = cv2.dilate(img_temp1, verticle_kernel, iterations=3) # Morphological operation to detect verticle lines from an image
@@ -95,6 +95,7 @@ def box_extraction(img_for_box_extraction_path, cropped_dir_path):
     # Weighting parameters, this will decide the quantity of an image to be added to make a new image.
     alpha = 0.5
     beta = 1.0 - alpha
+
     # This function helps to add two image with specific weight parameter to get a third image as summation of two image.
     img_final_bin = cv2.addWeighted(verticle_lines_img, alpha, horizontal_lines_img, beta, 0.0)
     img_final_bin = cv2.erode(~img_final_bin, kernel, iterations=2)
@@ -132,11 +133,12 @@ y = 1000
 MIN_THRESH = 5
 
 filename = "scan_Page_1.png"
-dirpath = "F:/PycharmProjects/NUTCR/Workbench/"
+dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\"
 box_extraction(filename, dirpath) # make sure to double backslash your file path
 
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
 # Show template, have customer pick header/info sections, maybe even point out broken cells?
 
-# Erode everything,
+# Majorly erode everything
+# check content of small area around center of each contour
