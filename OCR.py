@@ -41,10 +41,12 @@ def sort_contours(cnts, method="left-to-right"):
         sorted_boxes.extend(sorted(temp_list, key=lambda b: b[1][0]))
         temp_list = [pair]
     # sorted_boxes.extend(blah) <- last contour is the entire image and is not included
-    print(sorted_boxes)
+    for pair in sorted_boxes:
+        print(pair[0])
+        print(cv2.countNonZero(pair[0]))
     return ([pair[0] for pair in sorted_boxes], [pair[1] for pair in sorted_boxes])
 
-def draw_contour(image, c, i):
+def rank_contour(image, c, i):
     # compute the center of the contour area and draw a circle
     # representing the center
     if cv2.contourArea(c) < MIN_THRESH:
@@ -92,14 +94,11 @@ def box_extraction(img_for_box_extraction_path, cropped_dir_path):
     verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
     # A horizontal kernel of (kernel_length X 1), which will help to detect all the horizontal line from the image.
     hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_length, 1))
-    # A kernel of (3 X 3) ones.
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))  # Morphological operation to detect verticle lines from an image
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))  # A kernel of (3 X 3) ones
     img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=3)
-    verticle_lines_img = cv2.dilate(img_temp1, verticle_kernel, iterations=3)
-    #cv2.imwrite("verticle_lines.jpg", verticle_lines_img)  # Morphological operation to detect horizontal lines from an image
+    verticle_lines_img = cv2.dilate(img_temp1, verticle_kernel, iterations=3) # Morphological operation to detect verticle lines from an image
     img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
-    horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3)
-    #cv2.imwrite("horizontal_lines.jpg", horizontal_lines_img)
+    horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3) # Morphological operation to detect horizontal lines from an image
 
     # Weighting parameters, this will decide the quantity of an image to be added to make a new image.
     alpha = 0.5
@@ -126,7 +125,7 @@ def box_extraction(img_for_box_extraction_path, cropped_dir_path):
     contours, bounding = sort_contours(contours, "bottom-to-top")
     # contours, bounding = sort_contours(contours, "left-to-right")
     for i,c in enumerate(contours,1):
-        draw_contour(img_final_bin, c, i)
+        rank_contour(img_final_bin, c, i)
 
 
     img_final_bin = cv2.resize(img_final_bin, (x, y))
@@ -139,9 +138,10 @@ y = 1000
 
 # Threshold for contour centers in draw_contour
 MIN_THRESH = 5
-box_extraction(r"scan_Page_1.png", r"C:\ScriptStuff\OCR\Workbench\\")
+box_extraction(r"scan_Page_1.png", r"F:\PycharmProjects\NUTCR\Workbench\\") # make sure to double backslash your file path
 
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
 # Show template, have customer pick header/info sections, maybe even point out broken cells?
 
+# Erode everything,
