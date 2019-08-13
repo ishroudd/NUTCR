@@ -19,8 +19,7 @@ def sort_contours(cnts, method="left-to-right"):
 
     # construct the list of bounding boxes and sort them from top to bottom
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
-    contour_boxes = list(sorted(zip(cnts, boundingBoxes),
-                                        key=lambda b: b[1][i], reverse=reverse))
+    contour_boxes = list(sorted(zip(cnts, boundingBoxes), key=lambda b: b[1][i], reverse=reverse))
     sorted_boxes = []
     temp_list = [contour_boxes[0]]
     for pair in contour_boxes[1:]:
@@ -32,10 +31,7 @@ def sort_contours(cnts, method="left-to-right"):
             continue
         sorted_boxes.extend(sorted(temp_list, key=lambda b: b[1][0]))
         temp_list = [pair]
-    # sorted_boxes.extend(blah) <- last contour is the entire image and is not included
-    # for pair in sorted_boxes:
-    #     print(pair[0])
-    #     print(cv2.countNonZero(pair[0]))
+
     return ([pair[0] for pair in sorted_boxes], [pair[1] for pair in sorted_boxes])
 
 def rank_contour(image, c, i):
@@ -70,7 +66,6 @@ def extract_content(contours):
 
 def content_to_csv(content):
     1
-
 
 def box_extraction(img_for_box_extraction_path, cropped_dir_path):
 
@@ -119,7 +114,6 @@ def box_extraction(img_for_box_extraction_path, cropped_dir_path):
     for i,c in enumerate(contours,1):
         rank_contour(img_final_bin, c, i)
 
-
     img_final_bin = cv2.resize(img_final_bin, (x, y))
     cv2.imshow('result', img_final_bin)
     cv2.waitKey(0)
@@ -132,7 +126,7 @@ y = 1000
 MIN_THRESH = 5
 
 filename = r"scan_Page_1.png"
-dirpath = r"C:\ScriptStuff\NUTCR\Workbench\\"
+dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\"
 box_extraction(filename, dirpath) # make sure to double backslash your file path
 
 
