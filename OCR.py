@@ -14,7 +14,7 @@ def sort_contours(contours):
     sorted_boxes = []
     temp_list = [contour_boxes[0]]
     for pair in contour_boxes[1:]:
-        if pair[1][1] - temp_list[-1][1][1] in range(-6,6):
+        if pair[1][1] - temp_list[-1][1][1] in range(-10,10):
             temp_list.append(pair)
             continue
         elif len(temp_list) < 2:    # Lone contours are unlikely to be part of needed data
@@ -44,22 +44,18 @@ def rank_contour(image, contour, rank):
 
     return image
 
-def content_check(contour):
-    1
+def content_check(box, image):
+    cv2.rectangle(image, (box[0] + box[2] // 5, box[1] + box[3] // 5), (box[0] + 4 * box[2] // 5, box[1] + 4 * box[3] // 5), (255, 255, 255), 1)
+    # cv2.imshow('test', img)
+    img_test = cv2.resize(image, (x, y))
+    cv2.imshow('result', img_test)
+    cv2.waitKey(0)
+    total_white = cv2.countNonZero(image[box[1] + box[3] // 5:box[1] + 4 * box[3] // 5, box[0] + box[2] // 5:box[0] + 4 * box[2] // 5])
+    print(total_white)
+    return 1
 
-def extract_content(contours):
-    content = []
-    for contour in contours:
-        if contour[0][0][0] - FIRST_ROW_X in range(-10,10): #the list of contours is weird, looks like [[[x y]] [[x y]]]
-            content.append([])
-            content[-1].append(content_check(contour))
-        elif not content:
-            continue
-        content[-1].append(content_check(contour))
-
-def content_to_csv(bounding):
+def content_to_csv(content):
     1
-    #extract_content(bounding)
 
     # ...
 
@@ -67,7 +63,8 @@ def box_extraction(filename, dirpath):
 
     # Read and threshold the image
     img = cv2.imread(dirpath + filename, 0)
-    (thresh, img_bin) = cv2.threshold(img, 128, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    (thresh, img_bin) = cv2.threshold(img, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    print(thresh)
 
     # kernels for morphological operations
     kernel_length = np.array(img).shape[1] // 40
@@ -77,11 +74,11 @@ def box_extraction(filename, dirpath):
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))
 
     # Pull and recombine vertical and horizontal lines
-    img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=3)
-    verticle_lines = cv2.dilate(img_temp1, verticle_kernel, iterations=3)
+    img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=1)
+    verticle_lines = cv2.dilate(img_temp1, verticle_kernel, iterations=1)
 
-    img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
-    horizontal_lines = cv2.dilate(img_temp2, hori_kernel, iterations=3)
+    img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=1)
+    horizontal_lines = cv2.dilate(img_temp2, hori_kernel, iterations=1)
 
     img_skeleton = cv2.addWeighted(verticle_lines, 0.5, horizontal_lines, 0.5, 0.0)
     img_skeleton = cv2.erode(~img_skeleton, kernel, iterations=2)
@@ -100,8 +97,25 @@ def box_extraction(filename, dirpath):
     cv2.imshow('result', img_skeleton)
     cv2.waitKey(0)
 
+    img_eroded = cv2.erode(img_bin, kernel)
+    img_test0 = cv2.resize(img_eroded, (x, y))
+    cv2.imshow('result', img_test0)
+    cv2.waitKey(0)
+
     # Extract content from boxes as csv
-    content_to_csv(bounding)
+    content = []
+    for box in bounding[:-4]:  # Last 4 boxes of test page are unneeded
+        print(box)
+        if box[0] - FIRST_COL_X in range(-10, 10):  # the list of contours is weird, looks like [[[x y]] [[x y]]]
+            content.append([])
+            content[-1].append(content_check(box, img_eroded))
+        elif not content:
+            continue
+        else:
+            content[-1].append(content_check(box, img_eroded))
+    print(content)
+
+    content_to_csv(content)
 
 
 # Resolution
@@ -111,14 +125,11 @@ y = 1000
 # Threshold for contour centers in draw_contour
 MIN_THRESH = 5
 # X-coord of first row
-FIRST_ROW_X = 11
+FIRST_COL_X = 11
 
 filename = r"scan_Page_1.png"
-dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\"
-box_extraction(filename, dirpath) # make sure to double backslash your file path
+dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\" # make sure to double backslash your file path
+box_extraction(filename, dirpath)
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
 # Show template, have customer pick header/info sections, maybe even point out broken cells?
-
-# Majorly erode everything
-# check content of small area around center of each contour
