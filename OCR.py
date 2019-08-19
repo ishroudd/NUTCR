@@ -28,6 +28,7 @@ def sort_contours(contours):
         contours[i] = pair[0]
         boxes[i] = pair[1]
 
+    # Final output is sorted left to right, bottom to top
     return contours, boxes
 
 def rank_contour(image, contour, rank):
@@ -45,14 +46,17 @@ def rank_contour(image, contour, rank):
     return image
 
 def content_check(box, image):
-    cv2.rectangle(image, (box[0] + box[2] // 5, box[1] + box[3] // 5), (box[0] + 4 * box[2] // 5, box[1] + 4 * box[3] // 5), (255, 255, 255), 1)
-    # cv2.imshow('test', img)
-    img_test = cv2.resize(image, (x, y))
+    # For debugging
+    img_test = np.empty_like(image)
+    img_test[:] = image
+    cv2.rectangle(img_test, (box[0] + box[2] // 3, box[1] + box[3] // 3), (box[0] + 2 * box[2] // 3, box[1] + 2 * box[3] // 3), (255, 255, 255), 1)
+    img_test = cv2.resize(img_test, (x, y))
     cv2.imshow('result', img_test)
     cv2.waitKey(0)
-    total_white = cv2.countNonZero(image[box[1] + box[3] // 5:box[1] + 4 * box[3] // 5, box[0] + box[2] // 5:box[0] + 4 * box[2] // 5])
+
+    total_white = cv2.countNonZero(image[box[1] + box[3] // 3:box[1] + 2 * box[3] // 3, box[0] + box[2] // 3:box[0] + 2 * box[2] // 3])
     print(total_white)
-    return 1
+    return total_white
 
 def content_to_csv(content):
     1
@@ -64,7 +68,6 @@ def box_extraction(filename, dirpath):
     # Read and threshold the image
     img = cv2.imread(dirpath + filename, 0)
     (thresh, img_bin) = cv2.threshold(img, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-    print(thresh)
 
     # kernels for morphological operations
     kernel_length = np.array(img).shape[1] // 40
@@ -82,7 +85,7 @@ def box_extraction(filename, dirpath):
 
     img_skeleton = cv2.addWeighted(verticle_lines, 0.5, horizontal_lines, 0.5, 0.0)
     img_skeleton = cv2.erode(~img_skeleton, kernel, iterations=2)
-    (thresh, img_skeleton) = cv2.threshold(img_skeleton, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    (thresh, img_skeleton) = cv2.threshold(img_skeleton, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
     # Detect all boxes in modified image
     contours, hierarchy = cv2.findContours(img_skeleton, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -106,13 +109,14 @@ def box_extraction(filename, dirpath):
     content = []
     for box in bounding[:-4]:  # Last 4 boxes of test page are unneeded
         print(box)
-        if box[0] - FIRST_COL_X in range(-10, 10):  # the list of contours is weird, looks like [[[x y]] [[x y]]]
+        if box[0] - FIRST_COL_X in range(-10, 10):
             content.append([])
             content[-1].append(content_check(box, img_eroded))
         elif not content:
             continue
         else:
             content[-1].append(content_check(box, img_eroded))
+    reversed(content) # Doesn't work
     print(content)
 
     content_to_csv(content)
@@ -132,4 +136,4 @@ dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\" # make sure to double backslas
 box_extraction(filename, dirpath)
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
-# Show template, have customer pick header/info sections, maybe even point out broken cells?
+# Show template, have user pick header/info sections, maybe even point out broken cells?
