@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import csv
 
 # Sorts contours
 def sort_contours(contours):
@@ -47,21 +48,27 @@ def rank_contour(image, contour, rank):
 
 def content_check(box, image):
     # For debugging
-    img_test = np.empty_like(image)
-    img_test[:] = image
-    cv2.rectangle(img_test, (box[0] + box[2] // 3, box[1] + box[3] // 3), (box[0] + 2 * box[2] // 3, box[1] + 2 * box[3] // 3), (255, 255, 255), 1)
-    img_test = cv2.resize(img_test, (x, y))
-    cv2.imshow('result', img_test)
-    cv2.waitKey(0)
+    # img_test = np.empty_like(image)
+    # img_test[:] = image
+    # cv2.rectangle(img_test, (box[0] + box[2] // 3, box[1] + box[3] // 3), (box[0] + 2 * box[2] // 3, box[1] + 2 * box[3] // 3), (255, 255, 255), 1)
+    # img_test = cv2.resize(img_test, (x, y))
+    # cv2.imshow('result', img_test)
+    # cv2.waitKey(0)
 
     total_white = cv2.countNonZero(image[box[1] + box[3] // 3:box[1] + 2 * box[3] // 3, box[0] + box[2] // 3:box[0] + 2 * box[2] // 3])
-    print(total_white)
     return total_white
 
 def content_to_csv(content):
-    1
-
-    # ...
+    with open("TEST.csv", 'w', newline='') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        for row in content:
+            results = []
+            for item in row[4:]:
+                if item > 10:
+                    results += "X"
+                else:
+                    results += "A"
+            wr.writerow(results)
 
 def box_extraction(filename, dirpath):
 
@@ -105,21 +112,20 @@ def box_extraction(filename, dirpath):
     cv2.imshow('result', img_test0)
     cv2.waitKey(0)
 
-    # Extract content from boxes as csv
+    # Separate each box into its respective row
     content = []
-    for box in bounding[:-4]:  # Last 4 boxes of test page are unneeded
+    for box in bounding:  # Last 4 boxes of test page are unneeded
         print(box)
-        if box[0] - FIRST_COL_X in range(-10, 10):
+        if box[0] - FIRST_COL_X in range(-20, 20):
             content.append([])
             content[-1].append(content_check(box, img_eroded))
         elif not content:
             continue
         else:
             content[-1].append(content_check(box, img_eroded))
-    reversed(content) # Doesn't work
-    print(content)
+    print(content[::-1])
 
-    content_to_csv(content)
+    content_to_csv(content[::-1])   # Rows are originally from the bottom up and need to be [::-1]'d, sorry
 
 
 # Resolution
@@ -131,8 +137,8 @@ MIN_THRESH = 5
 # X-coord of first row
 FIRST_COL_X = 11
 
-filename = r"scan_Page_1.png"
-dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\" # make sure to double backslash your file path
+filename = r"scan_Page_3.png"
+dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\"   # make sure to double backslash your file path
 box_extraction(filename, dirpath)
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
