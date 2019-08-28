@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import csv
 
+
 # Sorts contours
 def sort_contours(contours):
 
@@ -15,7 +16,7 @@ def sort_contours(contours):
     sorted_boxes = []
     temp_list = [contour_boxes[0]]
     for pair in contour_boxes[1:]:
-        if pair[1][1] - temp_list[-1][1][1] in range(-10,10):
+        if pair[1][1] - temp_list[-1][1][1] in range(-10, 10):
             temp_list.append(pair)
             continue
         elif len(temp_list) < 2:    # Lone contours are unlikely to be part of needed data
@@ -32,6 +33,7 @@ def sort_contours(contours):
     # Final output is sorted left to right, bottom to top
     return contours, boxes
 
+
 def rank_contour(image, contour, rank):
     # compute the center of the contour area
     if cv2.contourArea(contour) < MIN_THRESH:
@@ -46,17 +48,21 @@ def rank_contour(image, contour, rank):
 
     return image
 
+
 def content_check(box, image):
     # For debugging
     # img_test = np.empty_like(image)
     # img_test[:] = image
-    # cv2.rectangle(img_test, (box[0] + box[2] // 3, box[1] + box[3] // 3), (box[0] + 2 * box[2] // 3, box[1] + 2 * box[3] // 3), (255, 255, 255), 1)
+    # cv2.rectangle(img_test, (box[0] + box[2] // 3, box[1] + box[3] // 3),
+    #               (box[0] + 2 * box[2] // 3, box[1] + 2 * box[3] // 3), (255, 255, 255), 1)
     # img_test = cv2.resize(img_test, (x, y))
     # cv2.imshow('result', img_test)
     # cv2.waitKey(0)
 
-    total_white = cv2.countNonZero(image[box[1] + box[3] // 3:box[1] + 2 * box[3] // 3, box[0] + box[2] // 3:box[0] + 2 * box[2] // 3])
+    total_white = cv2.countNonZero(image[box[1] + box[3] // 3:box[1] + 2 * box[3] // 3,
+                                   box[0] + box[2] // 3:box[0] + 2 * box[2] // 3])
     return total_white
+
 
 def content_to_csv(content):
     with open("TEST.csv", 'w', newline='') as myfile:
@@ -70,18 +76,19 @@ def content_to_csv(content):
                     results += "A"
             wr.writerow(results)
 
+
 def box_extraction(filename, dirpath):
 
     # Read and threshold the image
     img = cv2.imread(dirpath + filename, 0)
-    (thresh, img_bin) = cv2.threshold(img, 0, 255,cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    (thresh, img_bin) = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 
     # kernels for morphological operations
     kernel_length = np.array(img).shape[1] // 40
 
     verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
     hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_length, 1))
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 
     # Pull and recombine vertical and horizontal lines
     img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=1)
@@ -101,7 +108,7 @@ def box_extraction(filename, dirpath):
     contours, bounding = sort_contours(contours)
 
     # Draw sorted contours for debugging
-    for i,c in enumerate(contours,1):
+    for i, c in enumerate(contours, 1):
         rank_contour(img_skeleton, c, i)
     img_skeleton = cv2.resize(img_skeleton, (x, y))
     cv2.imshow('result', img_skeleton)
@@ -137,9 +144,9 @@ MIN_THRESH = 5
 # X-coord of first row
 FIRST_COL_X = 11
 
-filename = r"scan_Page_3.png"
-dirpath = r"F:\PycharmProjects\NUTCR\Workbench\\"   # make sure to double backslash your file path
-box_extraction(filename, dirpath)
+file = r"7.25_1.png"
+directory = r"F:\PycharmProjects\NUTCR\Workbench\\"   # make sure to double backslash your file path
+box_extraction(file, directory)
 
 # Get box template, super-expand the lines, then re-template to fix potential box breaks?
 # Show template, have user pick header/info sections, maybe even point out broken cells?
